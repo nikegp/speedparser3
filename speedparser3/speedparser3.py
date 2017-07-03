@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """An attempt to be able to parse 80% of feeds that feedparser would parse
@@ -6,7 +5,7 @@ in about 1% of the time feedparser would parse them in.
 
 LIMITATIONS:
 
- * result.feed.namespaces will only contain namespaces declaed on the
+ * result.feed.namespaces will only contain namespaces declared on the
    root object, not those declared later in the file
  * general lack of support for many types of feeds
  * only things verified in test.py are guaranteed to be there;  many fields
@@ -14,22 +13,19 @@ LIMITATIONS:
 
 """
 
-from __future__ import absolute_import, division, print_function
+
 from builtins import str
 import re
 import time
 try:
-	import urlparse
+	import urllib.parse
 except:
 	import urllib.parse as urlparse
 import chardet
 from lxml import etree
 from lxml.html import clean
 
-try:
-    import feedparser
-except:
-    import feedparsercompat as feedparser
+from . import feedparsercompat as feedparser
 
 keymap = feedparser.FeedParserDict.keymap
 fpnamespaces = feedparser._FeedParserMixin.namespaces
@@ -46,7 +42,9 @@ default_cleaner = clean.Cleaner(
     scripts=True,
     safe_attrs_only=True,
     page_structure=True,
-    style=True
+    style=True,
+    # remove_unknown_tags=False,
+    # remove_tags=['div', 'br', 'img', 'table', 'tr', 'td', 'a', 'p', 'font', 'span'],
 )
 
 simple_cleaner = clean.Cleaner(safe_attrs_only=True, page_structure=True)
@@ -111,14 +109,14 @@ nsre = re.compile(r'xmlns\s*=\s*[\'"](.+?)[\'"]')
 def strip_namespace(document):
     # convert our bytes to a unicode string so we can search and slice.
     decoded = document.decode('utf8')
-    if decoded[:1000].count('xmlns') > 5:
-        if 'xmlns' not in decoded[:1000]:
-            return None, document
-    elif 'xmlns' not in decoded[:400]:
+
+    if 'xmlns' not in decoded[:400]:
         return None, document
+
     match = nsre.search(decoded)
     if match:
-        return match.groups()[0], nsre.sub('', document)
+        return match.groups()[0], nsre.sub('', decoded).encode()
+
     return None, document
 
 
@@ -131,14 +129,14 @@ def munge_author(author):
         if emailmatch:
             email = emailmatch.group(0)
             # probably a better way to do the following, but it passes all the tests
-            author = author.replace(email, u'')
-            author = author.replace(u'()', u'')
-            author = author.replace(u'<>', u'')
-            author = author.replace(u'&lt;&gt;', u'')
+            author = author.replace(email, '')
+            author = author.replace('()', '')
+            author = author.replace('<>', '')
+            author = author.replace('&lt;&gt;', '')
             author = author.strip()
-            if author and (author[0] == u'('):
+            if author and (author[0] == '('):
                 author = author[1:]
-            if author and (author[-1] == u')'):
+            if author and (author[-1] == ')'):
                 author = author[:-1]
             author = author.strip()
             return '%s (%s)' % (author, email)
@@ -149,27 +147,27 @@ def munge_author(author):
 
 def reverse_namespace_map(nsmap):
     d = fpnamespaces.copy()
-    d.update(dict([(v, k) for (k, v) in nsmap.items()]))
+    d.update(dict([(v, k) for (k, v) in list(nsmap.items())]))
     return d
 
 
 def base_url(root):
     """Determine the base url for a root element."""
-    for attr, value in root.attrib.iteritems():
+    for attr, value in root.attrib.items():
         if attr.endswith('base') and 'http' in value:
             return value
     return None
 
 
 def full_href(href, base=None):
-    return urlparse.urljoin(base, href)
+    return urllib.parse.urljoin(base, href)
 
 
 def full_href_attribs(attribs, base=None):
     if base is None:
         return dict(attribs)
     d = dict(attribs)
-    for key, value in d.iteritems():
+    for key, value in d.items():
         if key == 'href':
             d[key] = full_href(value, base)
     return d
@@ -183,7 +181,9 @@ def clean_ns(tag):
     return '', tag
 
 
-def xpath(node, query, namespaces={}):
+def xpath(node, query, namespaces=None):
+    if not namespaces:
+        namespaces = {}
     """A safe xpath that only uses namespaces if available."""
     if namespaces and 'None' not in namespaces:
         return node.xpath(query, namespaces=namespaces)
@@ -233,7 +233,7 @@ class SpeedParserEntriesRss20(object):
     }
 
     def __init__(self, root, namespaces={}, version='rss20', encoding='utf-8', feed={},
-            cleaner=default_cleaner, unix_timestamp=False):
+                 cleaner=default_cleaner, unix_timestamp=False):
         self.encoding = encoding
         self.namespaces = namespaces
         self.unix_timestamp = unix_timestamp
@@ -252,6 +252,8 @@ class SpeedParserEntriesRss20(object):
         self.entries = entries
 
     def clean(self, text):
+        # if '<object' in text:
+        #     print(text)
         if text and isinstance(text, str):
             return self.cleaner.clean_html(text)
         return text
@@ -293,7 +295,7 @@ class SpeedParserEntriesRss20(object):
             e['summary'] = e['content'][0]['value']
 
         if e.get('summary', False) is None:
-            e['summary'] = u''
+            e['summary'] = ''
 
         # support feed entries that have a guid but no link
         if 'guid' in e and 'link' not in e:
@@ -399,6 +401,7 @@ class SpeedParserEntriesRss20(object):
             entry['summary'] = entry['content'][0]['value']
             return
         summary = unicoder(innertext(node))
+        # print(summary)
         summary = self.clean(summary)
         entry['summary'] = summary or ''
 
@@ -507,12 +510,8 @@ class SpeedParserFeedRss20(object):
 
         self.feed = feed
 
-    def clean(self, text, outer_tag=True):
+    def clean(self, text):
         if text and isinstance(text, str):
-            # txt and frag aren't used, this appears to be no-op code.
-            #if not outer_tag:
-            #    txt = self.cleaner.clean_html(text)
-            #    frag = lxml.html.fragment_fromstring(txt)
             return self.cleaner.clean_html(text)
         return text
 
@@ -550,7 +549,7 @@ class SpeedParserFeedRss20(object):
         if value:
             feed['generator'] = value
         else:
-            for value in node.attrib.itervalues():
+            for value in node.attrib.values():
                 if 'http://' in value:
                     feed['generator'] = value
 
@@ -569,7 +568,7 @@ class SpeedParserFeedRdf(SpeedParserFeedRss20):
     channel_xpath = '/rdf:RDF/channel'
 
 
-class SpeedParser(object):
+class SpeedParser3(object):
 
     version_map = {
         'rss2': 'rss20',
@@ -577,11 +576,13 @@ class SpeedParser(object):
 
     def __init__(self, content, cleaner=default_cleaner, unix_timestamp=False, encoding=None):
         self.cleaner = cleaner
+        # print(type(content))
         self.xmlns, content = strip_namespace(content)
         self.unix_timestamp = unix_timestamp
         if self.xmlns and '#' in self.xmlns:
             self.xmlns = self.xmlns.strip('#')
         parser = etree.XMLParser(recover=True)
+        # print(type(content))
         tree = etree.fromstring(content, parser=parser)
         if isinstance(tree, etree._ElementTree):
             self.tree = tree
@@ -625,7 +626,7 @@ class SpeedParser(object):
 
     def parse_namespaces(self):
         nsmap = self.root.nsmap.copy()
-        for key in nsmap.keys():
+        for key in list(nsmap.keys()):
             if key is None:
                 nsmap[self.xmlns] = nsmap[key]
                 del nsmap[key]
@@ -636,6 +637,7 @@ class SpeedParser(object):
         return self.tree.docinfo.encoding.lower()
 
     def parse_feed(self, version, encoding):
+        # print('')
         kwargs = dict(
             encoding=encoding,
             unix_timestamp=self.unix_timestamp,
@@ -647,6 +649,7 @@ class SpeedParser(object):
             return SpeedParserFeedRdf(self.root, **kwargs).feed_dict()
         if version in ('atom10', 'atom03'):
             return SpeedParserFeedAtom(self.root, **kwargs).feed_dict()
+        # print(version)
         raise IncompatibleFeedError("Feed not compatible with speedparser.")
 
     def parse_entries(self, version, encoding):
@@ -685,12 +688,16 @@ def parse(document, clean_html=True, unix_timestamp=False, encoding=None):
         cleaner = default_cleaner if clean_html else fake_cleaner
     else:
         cleaner = clean_html
+
+    # document= document.encode()
+
     result = feedparser.FeedParserDict()
     result['feed'] = feedparser.FeedParserDict()
     result['entries'] = []
     result['bozo'] = 0
+
     try:
-        parser = SpeedParser(document, cleaner, unix_timestamp, encoding)
+        parser = SpeedParser3(document, cleaner, unix_timestamp, encoding)
         parser.update(result)
     except Exception as e:
         if isinstance(e, UnicodeDecodeError) and encoding is True:
@@ -698,6 +705,7 @@ def parse(document, clean_html=True, unix_timestamp=False, encoding=None):
             document = document.decode(encoding, 'replace').encode('utf-8')
             return parse(document, clean_html, unix_timestamp, encoding)
         import traceback
+        # traceback.print_exc()
         result['bozo'] = 1
         result['bozo_exception'] = e
         result['bozo_tb'] = traceback.format_exc()

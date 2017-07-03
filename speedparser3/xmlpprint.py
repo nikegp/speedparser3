@@ -11,4 +11,4 @@ if not len(sys.argv) == 2:
     sys.exit(-1)
 
 tree = etree.parse(sys.argv[1])
-print(etree.tostring(tree, pretty_print=True))
+print((etree.tostring(tree, pretty_print=True)))

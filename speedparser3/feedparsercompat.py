@@ -21,6 +21,7 @@ class FeedParserDict(dict):
               'date': 'updated',
               'date_parsed': 'updated_parsed',
               'description': ['summary', 'subtitle'],
+              'description_detail': ['summary_detail', 'subtitle_detail'],
               'url': ['href'],
               'modified': 'updated',
               'modified_parsed': 'updated_parsed',
@@ -37,11 +38,11 @@ class FeedParserDict(dict):
             except IndexError:
                 raise KeyError("object doesn't have key 'category'")
         elif key == 'enclosures':
-            norel = lambda link: FeedParserDict([(name,value) for (name,value) in link.items() if name!='rel'])
-            return [norel(link) for link in dict.__getitem__(self, 'links') if link['rel']==u'enclosure']
+            norel = lambda link: FeedParserDict([(name,value) for (name,value) in list(link.items()) if name!='rel'])
+            return [norel(link) for link in dict.__getitem__(self, 'links') if link['rel']=='enclosure']
         elif key == 'license':
             for link in dict.__getitem__(self, 'links'):
-                if link['rel']==u'license' and 'href' in link:
+                if link['rel']=='license' and 'href' in link:
                     return link['href']
         else:
             realkey = self.keymap.get(key, key)
@@ -282,17 +283,17 @@ def _parse_date_iso8601(dateString):
 registerDateHandler(_parse_date_iso8601)
 
 # 8-bit date handling routines written by ytrewq1.
-_korean_year  = u'\ub144' # b3e2 in euc-kr
-_korean_month = u'\uc6d4' # bff9 in euc-kr
-_korean_day   = u'\uc77c' # c0cf in euc-kr
-_korean_am    = u'\uc624\uc804' # bfc0 c0fc in euc-kr
-_korean_pm    = u'\uc624\ud6c4' # bfc0 c8c4 in euc-kr
+_korean_year  = '\ub144' # b3e2 in euc-kr
+_korean_month = '\uc6d4' # bff9 in euc-kr
+_korean_day   = '\uc77c' # c0cf in euc-kr
+_korean_am    = '\uc624\uc804' # bfc0 c0fc in euc-kr
+_korean_pm    = '\uc624\ud6c4' # bfc0 c8c4 in euc-kr
 
 _korean_onblog_date_re = \
     re.compile('(\d{4})%s\s+(\d{2})%s\s+(\d{2})%s\s+(\d{2}):(\d{2}):(\d{2})' % \
                (_korean_year, _korean_month, _korean_day))
 _korean_nate_date_re = \
-    re.compile(u'(\d{4})-(\d{2})-(\d{2})\s+(%s|%s)\s+(\d{,2}):(\d{,2}):(\d{,2})' % \
+    re.compile('(\d{4})-(\d{2})-(\d{2})\s+(%s|%s)\s+(\d{,2}):(\d{,2}):(\d{,2})' % \
                (_korean_am, _korean_pm))
 def _parse_date_onblog(dateString):
     '''Parse a string according to the OnBlog 8-bit date format'''
@@ -328,40 +329,40 @@ registerDateHandler(_parse_date_nate)
 # Unicode strings for Greek date strings
 _greek_months = \
   { \
-   u'\u0399\u03b1\u03bd': u'Jan',       # c9e1ed in iso-8859-7
-   u'\u03a6\u03b5\u03b2': u'Feb',       # d6e5e2 in iso-8859-7
-   u'\u039c\u03ac\u03ce': u'Mar',       # ccdcfe in iso-8859-7
-   u'\u039c\u03b1\u03ce': u'Mar',       # cce1fe in iso-8859-7
-   u'\u0391\u03c0\u03c1': u'Apr',       # c1f0f1 in iso-8859-7
-   u'\u039c\u03ac\u03b9': u'May',       # ccdce9 in iso-8859-7
-   u'\u039c\u03b1\u03ca': u'May',       # cce1fa in iso-8859-7
-   u'\u039c\u03b1\u03b9': u'May',       # cce1e9 in iso-8859-7
-   u'\u0399\u03bf\u03cd\u03bd': u'Jun', # c9effded in iso-8859-7
-   u'\u0399\u03bf\u03bd': u'Jun',       # c9efed in iso-8859-7
-   u'\u0399\u03bf\u03cd\u03bb': u'Jul', # c9effdeb in iso-8859-7
-   u'\u0399\u03bf\u03bb': u'Jul',       # c9f9eb in iso-8859-7
-   u'\u0391\u03cd\u03b3': u'Aug',       # c1fde3 in iso-8859-7
-   u'\u0391\u03c5\u03b3': u'Aug',       # c1f5e3 in iso-8859-7
-   u'\u03a3\u03b5\u03c0': u'Sep',       # d3e5f0 in iso-8859-7
-   u'\u039f\u03ba\u03c4': u'Oct',       # cfeaf4 in iso-8859-7
-   u'\u039d\u03bf\u03ad': u'Nov',       # cdefdd in iso-8859-7
-   u'\u039d\u03bf\u03b5': u'Nov',       # cdefe5 in iso-8859-7
-   u'\u0394\u03b5\u03ba': u'Dec',       # c4e5ea in iso-8859-7
+   '\u0399\u03b1\u03bd': 'Jan',       # c9e1ed in iso-8859-7
+   '\u03a6\u03b5\u03b2': 'Feb',       # d6e5e2 in iso-8859-7
+   '\u039c\u03ac\u03ce': 'Mar',       # ccdcfe in iso-8859-7
+   '\u039c\u03b1\u03ce': 'Mar',       # cce1fe in iso-8859-7
+   '\u0391\u03c0\u03c1': 'Apr',       # c1f0f1 in iso-8859-7
+   '\u039c\u03ac\u03b9': 'May',       # ccdce9 in iso-8859-7
+   '\u039c\u03b1\u03ca': 'May',       # cce1fa in iso-8859-7
+   '\u039c\u03b1\u03b9': 'May',       # cce1e9 in iso-8859-7
+   '\u0399\u03bf\u03cd\u03bd': 'Jun', # c9effded in iso-8859-7
+   '\u0399\u03bf\u03bd': 'Jun',       # c9efed in iso-8859-7
+   '\u0399\u03bf\u03cd\u03bb': 'Jul', # c9effdeb in iso-8859-7
+   '\u0399\u03bf\u03bb': 'Jul',       # c9f9eb in iso-8859-7
+   '\u0391\u03cd\u03b3': 'Aug',       # c1fde3 in iso-8859-7
+   '\u0391\u03c5\u03b3': 'Aug',       # c1f5e3 in iso-8859-7
+   '\u03a3\u03b5\u03c0': 'Sep',       # d3e5f0 in iso-8859-7
+   '\u039f\u03ba\u03c4': 'Oct',       # cfeaf4 in iso-8859-7
+   '\u039d\u03bf\u03ad': 'Nov',       # cdefdd in iso-8859-7
+   '\u039d\u03bf\u03b5': 'Nov',       # cdefe5 in iso-8859-7
+   '\u0394\u03b5\u03ba': 'Dec',       # c4e5ea in iso-8859-7
   }
 
 _greek_wdays = \
   { \
-   u'\u039a\u03c5\u03c1': u'Sun', # caf5f1 in iso-8859-7
-   u'\u0394\u03b5\u03c5': u'Mon', # c4e5f5 in iso-8859-7
-   u'\u03a4\u03c1\u03b9': u'Tue', # d4f1e9 in iso-8859-7
-   u'\u03a4\u03b5\u03c4': u'Wed', # d4e5f4 in iso-8859-7
-   u'\u03a0\u03b5\u03bc': u'Thu', # d0e5ec in iso-8859-7
-   u'\u03a0\u03b1\u03c1': u'Fri', # d0e1f1 in iso-8859-7
-   u'\u03a3\u03b1\u03b2': u'Sat', # d3e1e2 in iso-8859-7
+   '\u039a\u03c5\u03c1': 'Sun', # caf5f1 in iso-8859-7
+   '\u0394\u03b5\u03c5': 'Mon', # c4e5f5 in iso-8859-7
+   '\u03a4\u03c1\u03b9': 'Tue', # d4f1e9 in iso-8859-7
+   '\u03a4\u03b5\u03c4': 'Wed', # d4e5f4 in iso-8859-7
+   '\u03a0\u03b5\u03bc': 'Thu', # d0e5ec in iso-8859-7
+   '\u03a0\u03b1\u03c1': 'Fri', # d0e1f1 in iso-8859-7
+   '\u03a3\u03b1\u03b2': 'Sat', # d3e1e2 in iso-8859-7
   }
 
 _greek_date_format_re = \
-    re.compile(u'([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)')
+    re.compile('([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)')
 
 def _parse_date_greek(dateString):
     '''Parse a string according to a Greek 8-bit date format.'''
@@ -380,22 +381,22 @@ registerDateHandler(_parse_date_greek)
 # Unicode strings for Hungarian date strings
 _hungarian_months = \
   { \
-    u'janu\u00e1r':   u'01',  # e1 in iso-8859-2
-    u'febru\u00e1ri': u'02',  # e1 in iso-8859-2
-    u'm\u00e1rcius':  u'03',  # e1 in iso-8859-2
-    u'\u00e1prilis':  u'04',  # e1 in iso-8859-2
-    u'm\u00e1ujus':   u'05',  # e1 in iso-8859-2
-    u'j\u00fanius':   u'06',  # fa in iso-8859-2
-    u'j\u00falius':   u'07',  # fa in iso-8859-2
-    u'augusztus':     u'08',
-    u'szeptember':    u'09',
-    u'okt\u00f3ber':  u'10',  # f3 in iso-8859-2
-    u'november':      u'11',
-    u'december':      u'12',
+    'janu\u00e1r':   '01',  # e1 in iso-8859-2
+    'febru\u00e1ri': '02',  # e1 in iso-8859-2
+    'm\u00e1rcius':  '03',  # e1 in iso-8859-2
+    '\u00e1prilis':  '04',  # e1 in iso-8859-2
+    'm\u00e1ujus':   '05',  # e1 in iso-8859-2
+    'j\u00fanius':   '06',  # fa in iso-8859-2
+    'j\u00falius':   '07',  # fa in iso-8859-2
+    'augusztus':     '08',
+    'szeptember':    '09',
+    'okt\u00f3ber':  '10',  # f3 in iso-8859-2
+    'november':      '11',
+    'december':      '12',
   }
 
 _hungarian_date_format_re = \
-  re.compile(u'(\d{4})-([^-]+)-(\d{,2})T(\d{,2}):(\d{2})((\+|-)(\d{,2}:\d{2}))')
+  re.compile('(\d{4})-([^-]+)-(\d{,2})T(\d{,2}):(\d{2})((\+|-)(\d{,2}:\d{2}))')
 
 def _parse_date_hungarian(dateString):
     '''Parse a string according to a Hungarian 8-bit date format.'''
