@@ -6,10 +6,10 @@
 from setuptools import setup, find_packages
 
 try:
-    from speedparser import VERSION
+    from speedparser3 import VERSION
     version = ".".join(map(str, VERSION))
 except:
-    version = '0.2.1'
+    version = '0.3.0'
 
 # some trove classifiers:
 
@@ -18,22 +18,21 @@ except:
 # Operating System :: POSIX
 
 setup(
-    name='speedparser',
+    name='speedparser3',
     version=version,
-    description="feedparser but faster and worse",
+    description="Python3 version of speedparser https://github.com/jmoiron/speedparser",
     long_description=open('README.rst').read(),
-    # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Intended Audience :: Developers',
         'Operating System :: POSIX',
         'Development Status :: 4 - Beta',
     ],
-    keywords='feedparser rss atom rdf lxml',
-    author='Jason Moiron',
-    author_email='jason@hiidef.com',
+    keywords='feedparser speedparser rss atom rdf lxml python3',
+    author='Nike Gurin-Petrovych',
+    author_email='nike.gurin@gmail.com',
 
-    url='https://github.com/hiidef/speedparser/',
+    url='https://github.com/nikegp/speedparser3',
     license='MIT',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     include_package_data=True,
@@ -41,10 +40,8 @@ setup(
     test_suite="tests",
     install_requires=[
       # -*- Extra requirements: -*-
-      # 'feedparser>=0.5',
       'lxml',
       'chardet',
-      'future'
     ],
     entry_points="""
     # -*- Entry points: -*-
