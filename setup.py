@@ -43,6 +43,7 @@ setup(
       'lxml',
       'chardet',
     ],
+    python_requires='>=3.5',
     entry_points="""
     # -*- Entry points: -*-
     """,
