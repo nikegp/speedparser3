@@ -1,8 +1,10 @@
 *.py[oc]
 *.sw[op]
 feeds/
+bozo/
 build/
 tests/data*
 dist/*
 *.egg-info
 tags
+.idea
