@@ -1,10 +1,10 @@
 speedparser3
------------
+------------
 
 Speedparser3 is a Python 3.5+ version of the original Speedparser by https://github.com/jmoiron/speedparser.
 
 speedparser
-----------
+-----------
 
 Speedparser is a black-box "style" reimplementation of the `Universal Feed
 Parser <http://code.google.com/p/feedparser/>`_.  It uses some feedparser code
